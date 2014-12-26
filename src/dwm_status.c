@@ -23,11 +23,9 @@
 
 size_t get_number_of_cpus()
 {
-	const int request[2] = { CTL_HW, HW_NCPU };
 	int hw_ncpu;
 	size_t hw_ncpu_size = sizeof(hw_ncpu);
-	const int retVal = sysctl(request, 2, &hw_ncpu, &hw_ncpu_size, NULL, 0);
-	if (retVal < 0)
+	if (sysctlbyname("hw.ncpu", &hw_ncpu, &hw_ncpu_size, NULL, 0) < 0)
 	{
 		// could not get number of CPUs from sysctl hw.ncpu
 		return 0;
