@@ -21,6 +21,21 @@
 #include <sys/sysctl.h>
 #include <X11/Xlib.h>
 
+size_t get_number_of_cpus()
+{
+	const int request[2] = { CTL_HW, HW_NCPU };
+	int hw_ncpu;
+	size_t hw_ncpu_size = sizeof(hw_ncpu);
+	const int retVal = sysctl(request, 2, &hw_ncpu, &hw_ncpu_size, NULL, 0);
+	if (retVal < 0)
+	{
+		// could not get number of CPUs from sysctl hw.ncpu
+		return 0;
+	}
+
+	return (size_t)(hw_ncpu);
+}
+
 int main(int argc, char** argv)
 {
 	// obtain the current display
@@ -30,6 +45,9 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Could not open display\n");
 		return 1;
 	}
+
+	// get cpu count
+	const size_t hw_ncpu = get_number_of_cpus();
 
 	// clean up
 	XCloseDisplay(display);
