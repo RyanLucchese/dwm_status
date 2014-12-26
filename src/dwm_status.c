@@ -36,7 +36,7 @@ size_t get_number_of_cpus()
 	return (size_t)(hw_ncpu);
 }
 
-int main(int argc, char** argv)
+int main()
 {
 	// obtain the current display
 	Display* display = NULL;
@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 
 	// get cpu count
 	const size_t hw_ncpu = get_number_of_cpus();
+	(void)hw_ncpu;
 
 	// clean up
 	XCloseDisplay(display);
