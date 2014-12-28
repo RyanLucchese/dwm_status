@@ -22,10 +22,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <time.h>
+#include <unistd.h>
 #include <sys/param.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
-#include <unistd.h>
 #include <X11/Xlib.h>
 
 // SIGINT handler to break out of main loop
@@ -106,6 +107,16 @@ size_t mem_total()
 	return mem_total;
 }
 
+size_t print_time(char* out, size_t out_size)
+{
+	time_t t = time(NULL);
+	struct tm* local_time = localtime(&t);
+
+	size_t bytes_written = strftime(out, out_size, "%R %d-%b-%Y", local_time);
+
+	return bytes_written;
+}
+
 int main()
 {
 	// obtain the current display
@@ -150,14 +161,18 @@ int main()
 		size_t total = mem_total();
 		size_t free_mb = free / 1024 / 1024;
 		size_t usage = total - free;
-		offset += snprintf(status + offset, status_size - offset, "%zuM %.0f%% ]", free_mb, ((float)usage / (float)total) * 100.0f);
+		offset += snprintf(status + offset, status_size - offset, "%zuM %.0f%% ][ ", free_mb, ((float)usage / (float)total) * 100.0f);
+
+		// time
+		offset += print_time(status + offset, status_size - offset);
+		offset += snprintf(status + offset, status_size - offset, " ]");
 
 		// update root window name
 		XStoreName(display, DefaultRootWindow(display), status);
 		XSync(display, False);
 
-		// sleep for 1 second
-		sleep(1);
+		// sleep for 5 seconds
+		sleep(5);
 	}
 
 	// clean up
