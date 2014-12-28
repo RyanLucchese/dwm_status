@@ -77,6 +77,35 @@ double cpu_usage(long* current, long* previous)
 	return (100L - (100L * current[CPUSTATES - 1] / (total ? total : 1L)));
 }
 
+size_t mem_free()
+{
+	int mem_free_pages;
+	size_t mem_free_size = sizeof(mem_free_pages);
+	if (sysctlbyname("vm.stats.vm.v_free_count", &mem_free_pages, &mem_free_size, NULL, 0) < 0)
+	{
+		// could not get free memory
+		return 0;
+	}
+
+	// convert pages to bytes
+	size_t mem_free = (size_t)(mem_free_pages) * getpagesize();
+
+	return mem_free;
+}
+
+size_t mem_total()
+{
+	size_t mem_total;
+	size_t mem_total_size = sizeof(mem_total);
+	if (sysctlbyname("hw.realmem", &mem_total, &mem_total_size, NULL, 0) < 0)
+	{
+		// colud not get total memory
+		return 0;
+	}
+
+	return mem_total;
+}
+
 int main()
 {
 	// obtain the current display
@@ -108,12 +137,20 @@ int main()
 		get_cp_times(pcpu_current, pcpu_count);
 
 		// prepare status message
+		// cpu usage
 		size_t offset = snprintf(status, status_size, "[ CPU ");
 		for (size_t i = 0; i < hw_ncpu; i++)
 		{
 			offset += snprintf(status + offset, status_size - offset, "%.0f%% ", cpu_usage(&pcpu_current[i * CPUSTATES], &pcpu_previous[i * CPUSTATES]));
 		}
-		offset += snprintf(status + offset, status_size - offset, "]");
+
+		// memory usage
+		offset += snprintf(status + offset, status_size - offset, "][ MEM ");
+		size_t free = mem_free();
+		size_t total = mem_total();
+		size_t free_mb = free / 1024 / 1024;
+		size_t usage = total - free;
+		offset += snprintf(status + offset, status_size - offset, "%zuM %.0f%% ]", free_mb, ((float)usage / (float)total) * 100.0f);
 
 		// update root window name
 		XStoreName(display, DefaultRootWindow(display), status);
